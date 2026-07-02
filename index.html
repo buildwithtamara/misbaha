@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, user-scalable=no">
+<title>مسبحة إلكترونية</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+<!--
+  كود إعلانات Google AdSense:
+  استبدل ca-pub-XXXXXXXXXXXXXXXX برقم الناشر الخاص فيك بعد قبول موقعك،
+  وفعّل السطر التالي (احذف علامات التعليق <!-- و -->)
+-->
+<!--
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX" crossorigin="anonymous"></script>
+-->
+
+<style>
+  :root{
+    --ink:#1B2B24;
+    --emerald-deep:#0F4C3A;
+    --emerald:#15613F;
+    --parchment:#FBF6EC;
+    --parchment-dim:#F1E9D8;
+    --gold:#C9A44C;
+    --gold-bright:#E4C878;
+    --gold-dim:rgba(201,164,76,0.28);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    background:
+      radial-gradient(circle at 50% -10%, #1c6b4c 0%, var(--emerald-deep) 45%, #0a3327 100%);
+    color:var(--parchment);
+    font-family:'Cairo',sans-serif;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    overflow-x:hidden;
+    position:relative;
+  }
+  /* subtle geometric star texture */
+  body::before{
+    content:"";
+    position:fixed; inset:0;
+    background-image:
+      linear-gradient(135deg, rgba(201,164,76,0.05) 25%, transparent 25%),
+      linear-gradient(225deg, rgba(201,164,76,0.05) 25%, transparent 25%),
+      linear-gradient(45deg, rgba(201,164,76,0.05) 25%, transparent 25%),
+      linear-gradient(315deg, rgba(201,164,76,0.05) 25%, transparent 25%);
+    background-position: 20px 0, 20px 0, 0 0, 0 0;
+    background-size: 40px 40px;
+    background-repeat: repeat;
+    pointer-events:none;
+    opacity:0.6;
+  }
+
+  header{
+    width:100%;
+    max-width:480px;
+    text-align:center;
+    padding:28px 20px 6px;
+    position:relative;
+    z-index:1;
+  }
+  header h1{
+    font-family:'Amiri', serif;
+    font-weight:700;
+    font-size:2rem;
+    margin:0 0 2px;
+    color:var(--gold-bright);
+    letter-spacing:1px;
+  }
+  header p{
+    margin:0;
+    font-size:0.82rem;
+    color:rgba(251,246,236,0.55);
+    letter-spacing:0.5px;
+  }
+
+  .dhikr-bar{
+    width:100%;
+    max-width:520px;
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:18px 20px 4px;
+    z-index:1;
+    scrollbar-width:none;
+  }
+  .dhikr-bar::-webkit-scrollbar{display:none;}
+  .chip{
+    flex:0 0 auto;
+    font-family:'Cairo',sans-serif;
+    font-weight:600;
+    font-size:0.88rem;
+    color:rgba(251,246,236,0.75);
+    background:rgba(251,246,236,0.06);
+    border:1px solid rgba(201,164,76,0.25);
+    padding:9px 16px;
+    border-radius:999px;
+    cursor:pointer;
+    transition:all .2s ease;
+    white-space:nowrap;
+  }
+  .chip:hover{border-color:var(--gold); color:var(--parchment);}
+  .chip.active{
+    background:linear-gradient(135deg, var(--gold) 0%, #a8823a 100%);
+    color:#20160a;
+    border-color:transparent;
+    box-shadow:0 4px 14px rgba(201,164,76,0.35);
+  }
+
+  main{
+    flex:1;
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:20px 20px 10px;
+    z-index:1;
+  }
+
+  .phrase{
+    font-family:'Amiri', serif;
+    font-size:1.5rem;
+    color:var(--gold-bright);
+    margin-bottom:26px;
+    min-height:2.2rem;
+    text-align:center;
+    transition:opacity .15s ease;
+  }
+
+  .ring-wrap{
+    position:relative;
+    width:min(78vw, 300px);
+    height:min(78vw, 300px);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  .bead{
+    position:absolute;
+    width:11px;
+    height:11px;
+    border-radius:50%;
+    background:rgba(251,246,236,0.18);
+    top:50%; left:50%;
+    transform-origin:0 0;
+    transition:background .25s ease, box-shadow .25s ease, transform .25s ease;
+  }
+  .bead.lit{
+    background:var(--gold-bright);
+    box-shadow:0 0 10px 2px rgba(228,200,120,0.7);
+  }
+
+  .tap-btn{
+    position:relative;
+    width:64%;
+    height:64%;
+    border-radius:50%;
+    border:none;
+    cursor:pointer;
+    background:
+      radial-gradient(circle at 35% 30%, #1d7752, var(--emerald) 55%, var(--emerald-deep) 100%);
+    box-shadow:
+      0 0 0 1px rgba(201,164,76,0.4),
+      0 10px 30px rgba(0,0,0,0.45),
+      inset 0 2px 6px rgba(255,255,255,0.15),
+      inset 0 -8px 18px rgba(0,0,0,0.35);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    color:var(--parchment);
+    transition:transform .08s ease;
+    -webkit-user-select:none; user-select:none;
+  }
+  .tap-btn:active{transform:scale(0.94);}
+  .count{
+    font-family:'Cairo',sans-serif;
+    font-weight:900;
+    font-size:2.9rem;
+    line-height:1;
+    color:var(--gold-bright);
+  }
+  .count-label{
+    margin-top:6px;
+    font-size:0.75rem;
+    color:rgba(251,246,236,0.6);
+    letter-spacing:1px;
+  }
+
+  .stats{
+    display:flex;
+    gap:28px;
+    margin-top:26px;
+    z-index:1;
+  }
+  .stat{text-align:center;}
+  .stat .num{font-family:'Cairo',sans-serif; font-weight:700; font-size:1.15rem; color:var(--parchment);}
+  .stat .lbl{font-size:0.72rem; color:rgba(251,246,236,0.5); margin-top:2px;}
+
+  .controls{
+    display:flex;
+    gap:14px;
+    padding:24px 20px 34px;
+    z-index:1;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .ctrl-btn{
+    font-family:'Cairo',sans-serif;
+    font-weight:600;
+    font-size:0.85rem;
+    padding:11px 20px;
+    border-radius:14px;
+    border:1px solid rgba(201,164,76,0.3);
+    background:rgba(251,246,236,0.05);
+    color:var(--parchment);
+    cursor:pointer;
+    transition:all .2s ease;
+  }
+  .ctrl-btn:hover{background:rgba(201,164,76,0.15); border-color:var(--gold);}
+  .ctrl-btn.danger{color:#e0a58a; border-color:rgba(224,120,90,0.35);}
+  .ctrl-btn.danger:hover{background:rgba(224,120,90,0.12);}
+
+  .target-select{
+    display:flex; align-items:center; gap:8px;
+    font-size:0.8rem; color:rgba(251,246,236,0.55);
+  }
+  .target-select select{
+    font-family:'Cairo',sans-serif;
+    background:rgba(251,246,236,0.06);
+    color:var(--parchment);
+    border:1px solid rgba(201,164,76,0.3);
+    border-radius:10px;
+    padding:6px 10px;
+    font-size:0.85rem;
+  }
+
+  .content{
+    width:100%;
+    max-width:640px;
+    padding:10px 24px 40px;
+    z-index:1;
+  }
+  .content .divider{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin:36px 0 26px;
+    color:rgba(201,164,76,0.6);
+  }
+  .content .divider::before,
+  .content .divider::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:linear-gradient(90deg, transparent, rgba(201,164,76,0.4), transparent);
+  }
+  .content h2{
+    font-family:'Amiri', serif;
+    font-size:1.4rem;
+    color:var(--gold-bright);
+    margin:0 0 12px;
+  }
+  .content p{
+    font-size:0.92rem;
+    line-height:1.9;
+    color:rgba(251,246,236,0.8);
+    margin:0 0 14px;
+  }
+  .content ul{
+    margin:0 0 14px;
+    padding-inline-start:22px;
+  }
+  .content li{
+    font-size:0.92rem;
+    line-height:1.85;
+    color:rgba(251,246,236,0.8);
+    margin-bottom:8px;
+  }
+  .content .faq-item{
+    margin-bottom:16px;
+  }
+  .content .faq-item h3{
+    font-family:'Cairo',sans-serif;
+    font-size:0.98rem;
+    font-weight:700;
+    color:var(--parchment);
+    margin:0 0 5px;
+  }
+  .content .faq-item p{margin:0;}
+
+  footer{
+    width:100%;
+    max-width:640px;
+    padding:20px 24px 40px;
+    text-align:center;
+    z-index:1;
+    border-top:1px solid rgba(201,164,76,0.15);
+  }
+  footer p{
+    font-size:0.75rem;
+    color:rgba(251,246,236,0.4);
+    line-height:1.8;
+    margin:6px 0;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>مسبحة إلكترونية</h1>
+  <p>اضغط في المنتصف لتسبيح الله</p>
+</header>
+
+<div class="dhikr-bar" id="dhikrBar"></div>
+
+<main>
+  <div class="phrase" id="phraseDisplay">سبحان الله</div>
+
+  <div class="ring-wrap" id="ringWrap">
+    <button class="tap-btn" id="tapBtn" aria-label="اضغط للعد">
+      <div class="count" id="countDisplay">0</div>
+      <div class="count-label" id="countLabel">من 33</div>
+    </button>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="num" id="roundsDisplay">0</div>
+      <div class="lbl">أشواط</div>
+    </div>
+    <div class="stat">
+      <div class="num" id="totalDisplay">0</div>
+      <div class="lbl">الإجمالي</div>
+    </div>
+  </div>
+</main>
+
+<div class="controls">
+  <div class="target-select">
+    <span>الهدف</span>
+    <select id="targetSelect">
+      <option value="33">٣٣</option>
+      <option value="99">٩٩</option>
+      <option value="100">١٠٠</option>
+      <option value="1000">١٠٠٠</option>
+    </select>
+  </div>
+  <button class="ctrl-btn" id="undoBtn">تراجع</button>
+  <button class="ctrl-btn" id="zeroBtn">تصفير العدد</button>
+  <button class="ctrl-btn danger" id="resetBtn">إعادة تعيين الكل</button>
+</div>
+
+<!-- مساحة إعلانية علوية: فعّلها بعد الحصول على موافقة AdSense
+<div class="ad-slot">
+  <div class="ad-label">إعلان</div>
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+       data-ad-slot="XXXXXXXXXX"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+-->
+
+<div class="content">
+  <div class="divider">☙ ✦ ❧</div>
+  <h2>ما هي المسبحة الإلكترونية؟</h2>
+  <p>
+    المسبحة الإلكترونية أداة رقمية تساعدك على عدّ أذكارك وتسبيحاتك اليومية بدقة، بديلاً عمليًا عن المسبحة التقليدية
+    عندما لا تكون بين يديك. تحفظ لك عدد المرات التي كررت فيها الذكر، وعدد الأشواط الكاملة التي أتممتها، وتُبقي كل
+    هذه الأرقام محفوظة تلقائيًا في متصفحك حتى لو أغلقت الصفحة وعدت إليها لاحقًا.
+  </p>
+
+  <h2>فضل الذكر والتسبيح</h2>
+  <p>
+    حثّ الإسلام على الإكثار من ذكر الله في كل وقت وحال، فالذكر طمأنينة للقلب وزاد للروح. من أكثر الأذكار المأثورة
+    التي يواظب عليها المسلمون:
+  </p>
+  <ul>
+    <li><strong>سبحان الله</strong> — تنزيه لله عن كل نقص.</li>
+    <li><strong>الحمد لله</strong> — شكر لله على نعمه الظاهرة والباطنة.</li>
+    <li><strong>الله أكبر</strong> — تعظيم لله فوق كل شيء.</li>
+    <li><strong>لا إله إلا الله</strong> — كلمة التوحيد الخالصة.</li>
+    <li><strong>أستغفر الله</strong> — طلب المغفرة والتوبة.</li>
+  </ul>
+  <p>
+    وردت في الأحاديث النبوية فضائل عظيمة لهذه الأذكار، منها أنها تُثقل الميزان وتُكفّر الذنوب وتُقرّب العبد من ربه،
+    وهي من أيسر الأعمال وأعظمها أجرًا لأنها لا تحتاج جهدًا بدنيًا ولا وقتًا مخصصًا، فيمكن ترديدها في أي مكان وزمان.
+  </p>
+
+  <h2>كيف تستخدم المسبحة الإلكترونية؟</h2>
+  <ul>
+    <li>اختر الذكر الذي تريد تسبيحه من القائمة العلوية.</li>
+    <li>حدد الهدف المطلوب (٣٣، ٩٩، ١٠٠، أو ١٠٠٠) من قائمة "الهدف".</li>
+    <li>اضغط على الدائرة الوسطى في كل مرة تُردّد فيها الذكر.</li>
+    <li>عند اكتمال الهدف يُسجَّل شوط كامل ويبدأ العدّ من جديد تلقائيًا.</li>
+    <li>استخدم زر "تصفير العدد" لإعادة العداد الحالي فقط، أو "إعادة تعيين الكل" لمسح كل الإحصائيات.</li>
+    <li>جميع بياناتك تُحفظ تلقائيًا في متصفحك، فلا داعي للقلق من فقدان تقدمك.</li>
+  </ul>
+
+  <h2>الأسئلة الشائعة</h2>
+  <div class="faq-item">
+    <h3>هل تحتاج المسبحة الإلكترونية إلى إنترنت؟</h3>
+    <p>لا، بعد تحميل الصفحة مرة واحدة يمكنك استخدام العداد دون اتصال بالإنترنت.</p>
+  </div>
+  <div class="faq-item">
+    <h3>هل يُحفظ عددي إذا أغلقت المتصفح؟</h3>
+    <p>نعم، يُحفظ العدد والأشواط والإجمالي تلقائيًا في متصفحك وتجدها كما هي عند العودة.</p>
+  </div>
+  <div class="faq-item">
+    <h3>هل يمكنني استخدامها على الهاتف؟</h3>
+    <p>نعم، الصفحة مصممة لتعمل بسلاسة على الهواتف والأجهزة اللوحية وأجهزة الكمبيوتر.</p>
+  </div>
+  <div class="faq-item">
+    <h3>هل يمكن إضافة ذكر خاص بي؟</h3>
+    <p>القائمة الحالية تضم أشهر الأذكار المأثورة، ويمكن تخصيصها بسهولة حسب رغبتك.</p>
+  </div>
+</div>
+
+<!-- مساحة إعلانية سفلية: فعّلها بعد الحصول على موافقة AdSense
+<div class="ad-slot">
+  <div class="ad-label">إعلان</div>
+  <ins class="adsbygoogle"
+       style="display:block"
+       data-ad-client="ca-pub-XXXXXXXXXXXXXXXX"
+       data-ad-slot="YYYYYYYYYY"
+       data-ad-format="auto"
+       data-full-width-responsive="true"></ins>
+  <script>(adsbygoogle = window.adsbygoogle || []).push({});</script>
+</div>
+-->
+
+<footer>
+  <p>مسبحة إلكترونية — أداة مجانية لعدّ الأذكار والتسبيحات اليومية.</p>
+  <p>جميع البيانات تُحفظ محليًا في متصفحك ولا تُرسل إلى أي خادم خارجي.</p>
+</footer>
+
+
+<script>
+  const dhikrList = [
+    "سبحان الله",
+    "الحمد لله",
+    "الله أكبر",
+    "لا إله إلا الله",
+    "أستغفر الله",
+    "لا حول ولا قوة إلا بالله"
+  ];
+
+  const dhikrBar = document.getElementById('dhikrBar');
+  const phraseDisplay = document.getElementById('phraseDisplay');
+  const countDisplay = document.getElementById('countDisplay');
+  const countLabel = document.getElementById('countLabel');
+  const roundsDisplay = document.getElementById('roundsDisplay');
+  const totalDisplay = document.getElementById('totalDisplay');
+  const tapBtn = document.getElementById('tapBtn');
+  const ringWrap = document.getElementById('ringWrap');
+  const targetSelect = document.getElementById('targetSelect');
+  const undoBtn = document.getElementById('undoBtn');
+  const zeroBtn = document.getElementById('zeroBtn');
+  const resetBtn = document.getElementById('resetBtn');
+
+  const STORAGE_KEY = 'tasbih-state-v1';
+
+  function loadState(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    }catch(e){ /* localStorage unavailable, fall back to defaults */ }
+    return null;
+  }
+
+  function saveState(){
+    try{
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }catch(e){ /* storage unavailable, continue without persistence */ }
+  }
+
+  let state = loadState() || {
+    dhikrIndex: 0,
+    count: 0,
+    rounds: 0,
+    total: 0,
+    target: 33
+  };
+
+  // build dhikr chips
+  dhikrList.forEach((d, i) => {
+    const chip = document.createElement('div');
+    chip.className = 'chip' + (i === state.dhikrIndex ? ' active' : '');
+    chip.textContent = d;
+    chip.addEventListener('click', () => {
+      state.dhikrIndex = i;
+      phraseDisplay.style.opacity = 0;
+      setTimeout(() => {
+        phraseDisplay.textContent = d;
+        phraseDisplay.style.opacity = 1;
+      }, 120);
+      document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+      chip.classList.add('active');
+      saveState();
+    });
+    dhikrBar.appendChild(chip);
+  });
+  phraseDisplay.textContent = dhikrList[state.dhikrIndex];
+  targetSelect.value = state.target;
+
+  // build bead ring
+  function buildBeads(n){
+    ringWrap.querySelectorAll('.bead').forEach(b => b.remove());
+    const radius = ringWrap.clientWidth / 2 - 6;
+    for(let i = 0; i < n; i++){
+      const angle = (i / n) * 2 * Math.PI - Math.PI / 2;
+      const bead = document.createElement('div');
+      bead.className = 'bead';
+      const x = radius * Math.cos(angle);
+      const y = radius * Math.sin(angle);
+      bead.style.transform = `translate(${x}px, ${y}px)`;
+      bead.dataset.index = i;
+      ringWrap.appendChild(bead);
+    }
+  }
+
+  function beadCountForTarget(t){
+    return t <= 100 ? t : 33; // for large targets, ring still shows a 33-cycle
+  }
+
+  function updateBeads(){
+    const beadN = beadCountForTarget(state.target);
+    const lit = state.count % beadN === 0 && state.count > 0 ? beadN : state.count % beadN;
+    document.querySelectorAll('.bead').forEach(b => {
+      const idx = parseInt(b.dataset.index, 10);
+      b.classList.toggle('lit', idx < lit);
+    });
+  }
+
+  function render(){
+    countDisplay.textContent = state.count;
+    countLabel.textContent = `من ${state.target}`;
+    roundsDisplay.textContent = state.rounds;
+    totalDisplay.textContent = state.total;
+    updateBeads();
+  }
+
+  function initRing(){
+    buildBeads(beadCountForTarget(state.target));
+    updateBeads();
+  }
+
+  tapBtn.addEventListener('click', () => {
+    state.count++;
+    state.total++;
+    if (state.count >= state.target){
+      state.rounds++;
+      state.count = 0;
+      if (navigator.vibrate) navigator.vibrate([30, 40, 30]);
+    } else {
+      if (navigator.vibrate) navigator.vibrate(15);
+    }
+    render();
+    saveState();
+  });
+
+  undoBtn.addEventListener('click', () => {
+    if (state.total > 0){
+      state.total--;
+      if (state.count > 0){
+        state.count--;
+      } else if (state.rounds > 0) {
+        state.rounds--;
+        state.count = state.target - 1;
+      }
+      render();
+      saveState();
+    }
+  });
+
+  // يصفّر العدد الحالي فقط، دون المساس بعدد الأشواط أو الإجمالي
+  zeroBtn.addEventListener('click', () => {
+    state.count = 0;
+    render();
+    saveState();
+  });
+
+  // يعيد كل شيء إلى الصفر: العدد، الأشواط، والإجمالي
+  resetBtn.addEventListener('click', () => {
+    state.count = 0;
+    state.rounds = 0;
+    state.total = 0;
+    render();
+    saveState();
+  });
+
+  targetSelect.addEventListener('change', (e) => {
+    state.target = parseInt(e.target.value, 10);
+    state.count = 0;
+    initRing();
+    render();
+    saveState();
+  });
+
+  window.addEventListener('resize', () => {
+    buildBeads(beadCountForTarget(state.target));
+    updateBeads();
+  });
+
+  initRing();
+  render();
+</script>
+
+</body>
+</html>
